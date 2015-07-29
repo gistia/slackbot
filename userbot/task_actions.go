@@ -15,6 +15,27 @@ type TaskAction struct {
 	step Executable
 }
 
+func (a *TaskAction) Execute(bot *UserBot, msg *IncomingMsg) Executable {
+	cmd := utils.NewCommand(msg.Text)
+
+	prName := cmd.Param("project")
+	if prName != "" {
+		project, err := db.GetProjectByName(prName)
+		if err != nil {
+			bot.replyError(err)
+			return nil
+		}
+
+		a.step = &SendProject{action: a, project: *project}
+	}
+
+	if a.step == nil {
+		a.step = &SendProjects{a}
+	}
+
+	return a.step.Execute(bot, msg)
+}
+
 type SendProjects struct {
 	action *TaskAction
 }
@@ -22,6 +43,11 @@ type SendProjects struct {
 type WaitingProject struct {
 	action   *TaskAction
 	projects []db.Project
+}
+
+type SendProject struct {
+	action  *TaskAction
+	project db.Project
 }
 
 type WaitingStory struct {
@@ -46,8 +72,13 @@ func (w *WaitingProject) Execute(bot *UserBot, msg *IncomingMsg) Executable {
 	}
 
 	project := w.projects[choice]
+	sp := &SendProject{action: w.action, project: project}
+	return sp.Execute(bot, msg)
+}
 
-	bot.reply("You chose: *" + project.Name + "*. Please wait while we load the tasks...")
+func (w *SendProject) Execute(bot *UserBot, msg *IncomingMsg) Executable {
+	project := w.project
+	bot.reply("Project: *" + project.Name + "*. Please wait while we load the tasks...")
 
 	mvn, err := mavenlink.NewFor(msg.User.Name)
 	if err != nil {
@@ -133,7 +164,7 @@ func (w *WaitingStory) Execute(bot *UserBot, msg *IncomingMsg) Executable {
 	mvnAssigneeStr := strings.Join(mvnAssignees, ", ")
 	pvtAssigneeStr := strings.Join(pvtAssignees, ", ")
 
-	reply := fmt.Sprintf("You selected *%s - %s*.\n", story.Id, story.Title)
+	reply := fmt.Sprintf("Task: *%s - %s*\n", story.Id, story.Title)
 
 	reply += "Mavenlink: *" + strings.Title(story.State) + "*"
 	if len(mvnAssignees) > 0 {
@@ -157,14 +188,6 @@ func (w *WaitingStory) Execute(bot *UserBot, msg *IncomingMsg) Executable {
 	bot.reply(reply)
 
 	return nil
-}
-
-func (a *TaskAction) Execute(bot *UserBot, msg *IncomingMsg) Executable {
-	if a.step == nil {
-		a.step = &SendProjects{a}
-	}
-
-	return a.step.Execute(bot, msg)
 }
 
 func (a *TaskAction) sendProjects(bot *UserBot) ([]db.Project, error) {
