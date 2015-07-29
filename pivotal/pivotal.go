@@ -62,6 +62,7 @@ type Story struct {
 	Type        string  `json:"story_type,omitempty"`
 	ProjectId   int64   `json:"project_id,omitempty"`
 	OwnerIds    []int64 `json:"owner_ids,omitempty"`
+	Owners      []Person
 }
 
 type ProjectMembership struct {
@@ -315,6 +316,24 @@ func (s *Story) GetMavenlinkId() string {
 
 func (s *Story) GetStringId() string {
 	return strconv.FormatInt(s.Id, 10)
+}
+
+func (pvt *Pivotal) GetAssignees(story Story) (*Story, error) {
+	memberships, err := pvt.GetProjectMemberships(strconv.FormatInt(story.ProjectId, 10))
+	if err != nil {
+		return nil, err
+	}
+
+	story.Owners = []Person{}
+	for _, id := range story.OwnerIds {
+		for _, m := range memberships {
+			if m.Person.Id == id {
+				story.Owners = append(story.Owners, m.Person)
+			}
+		}
+	}
+
+	return &story, nil
 }
 
 //---------- Project Memberships

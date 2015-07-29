@@ -1,6 +1,9 @@
 package mavenlink
 
-import "fmt"
+import (
+	"fmt"
+	"regexp"
+)
 
 type Story struct {
 	Id                          string   `json:"id,omitempty"`
@@ -28,6 +31,11 @@ func (mvn *Mavenlink) GetAssignees(s Story) (*Story, error) {
 	}
 
 	return &s, nil
+}
+
+func (s *Story) GetPivotalId() string {
+	reg := regexp.MustCompile(`\[pvt:(\d+)\]`)
+	return reg.ReplaceAllString(s.Description, "${1}")
 }
 
 func (s *Story) URL() string {

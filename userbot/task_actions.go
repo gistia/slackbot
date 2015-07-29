@@ -3,9 +3,12 @@ package userbot
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/gistia/slackbot/db"
 	"github.com/gistia/slackbot/mavenlink"
+	"github.com/gistia/slackbot/pivotal"
+	"github.com/gistia/slackbot/utils"
 )
 
 type TaskAction struct {
@@ -44,7 +47,7 @@ func (w *WaitingProject) Execute(bot *UserBot, msg *IncomingMsg) Executable {
 
 	project := w.projects[choice]
 
-	bot.reply("You chose: *" + project.Name + "*")
+	bot.reply("You chose: *" + project.Name + "*. Please wait while we load the tasks...")
 
 	mvn, err := mavenlink.NewFor(msg.User.Name)
 	if err != nil {
@@ -87,7 +90,71 @@ func (w *WaitingStory) Execute(bot *UserBot, msg *IncomingMsg) Executable {
 
 	story := w.stories[choice]
 
-	bot.reply(fmt.Sprintf("You selected *%s - %s*", story.Id, story.Title))
+	mvn, err := mavenlink.NewFor(msg.User.Name)
+	if err != nil {
+		bot.replyError(err)
+		return nil
+	}
+
+	pvt, err := pivotal.NewFor(msg.User.Name)
+	if err != nil {
+		bot.replyError(err)
+		return nil
+	}
+
+	pvtStory, err := pvt.GetStory(story.GetPivotalId())
+	if err != nil {
+		bot.replyError(err)
+		return nil
+	}
+
+	aMvnStory, err := mvn.GetAssignees(story)
+	if err != nil {
+		bot.replyError(err)
+		return nil
+	}
+
+	pvtStory, err = pvt.GetAssignees(*pvtStory)
+	if err != nil {
+		bot.replyError(err)
+		return nil
+	}
+
+	mvnAssignees := []string{}
+	for _, u := range aMvnStory.Users {
+		mvnAssignees = append(mvnAssignees, u.Name)
+	}
+
+	pvtAssignees := []string{}
+	for _, u := range pvtStory.Owners {
+		pvtAssignees = append(pvtAssignees, u.Name)
+	}
+
+	mvnAssigneeStr := strings.Join(mvnAssignees, ", ")
+	pvtAssigneeStr := strings.Join(pvtAssignees, ", ")
+
+	reply := fmt.Sprintf("You selected *%s - %s*.\n", story.Id, story.Title)
+
+	reply += "Mavenlink: *" + strings.Title(story.State) + "*"
+	if len(mvnAssignees) > 0 {
+		reply += " by *" + mvnAssigneeStr + "*"
+	}
+	if story.TimeEstimateInMinutes > 0 {
+		reply += ", estimated *" + utils.FormatHour(story.TimeEstimateInMinutes) + "h*"
+	}
+	if story.LoggedBillableTimeInMinutes > 0 {
+		reply += ", logged *" + utils.FormatHour(story.LoggedBillableTimeInMinutes) + "h*"
+	}
+
+	reply += "\nPivotal: *" + strings.Title(pvtStory.State) + "*"
+	if len(pvtAssignees) > 0 {
+		reply += " by *" + pvtAssigneeStr + "*"
+	}
+	if pvtStory.Estimate > 0 {
+		reply += fmt.Sprintf(", estimate *%d*", pvtStory.Estimate)
+	}
+
+	bot.reply(reply)
 
 	return nil
 }
