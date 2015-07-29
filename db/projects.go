@@ -51,7 +51,7 @@ func GetProjects() ([]Project, error) {
     SELECT
       "id", "name", "pivotal_id", "mavenlink_id", "created_by",
       "mvn_sprint_story_id", "channel"
-    FROM projects`)
+    FROM projects WHERE active = TRUE`)
 	if err != nil {
 		return nil, err
 	}

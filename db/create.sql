@@ -91,3 +91,9 @@ CREATE TABLE "timers" (
   "created_at" timestamp default CURRENT_TIMESTAMP,
   CONSTRAINT timers_pkey PRIMARY KEY (id)
 ) WITH (OIDS=FALSE);
+
+ALTER TABLE "projects" ADD "channel" varchar(255);
+ALTER TABLE "projects" ADD "active" BOOLEAN;
+UPDATE "projects" SET "active" = TRUE;
+ALTER TABLE "projects" ALTER COLUMN "active" SET NOT NULL;
+ALTER TABLE "projects" ALTER COLUMN "active" SET DEFAULT TRUE;
