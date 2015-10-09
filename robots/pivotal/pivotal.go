@@ -40,8 +40,8 @@ func (r bot) DeferredAction(p *robots.Payload) {
 }
 
 func (r bot) users(p *robots.Payload, cmd utils.Command) error {
-	projectId := cmd.Arg(0)
-	if projectId == "" {
+	projectID := cmd.Arg(0)
+	if projectID == "" {
 		r.handler.Send(p, "Missing project id. Use !pvt users <project-id>")
 		return nil
 	}
@@ -51,16 +51,16 @@ func (r bot) users(p *robots.Payload, cmd utils.Command) error {
 		return err
 	}
 
-	project, err := pvt.GetProject(projectId)
+	project, err := pvt.GetProject(projectID)
 	if err != nil {
 		return err
 	}
 	if project == nil {
-		r.handler.Send(p, "Project with id "+projectId+" doesn't exist.")
+		r.handler.Send(p, "Project with id "+projectID+" doesn't exist.")
 		return nil
 	}
 
-	memberships, err := pvt.GetProjectMemberships(projectId)
+	memberships, err := pvt.GetProjectMemberships(projectID)
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func (r bot) sendProjects(payload *robots.Payload, cmd utils.Command) error {
 		// ps, err = pvt.SearchProject(term)
 	} else {
 		s += ":\n"
-		fmt.Println("Retrieving projects...\n")
+		fmt.Println("Retrieving projects...")
 		ps, err = pvt.Projects()
 	}
 
@@ -180,8 +180,13 @@ func (r bot) setStoryState(p *robots.Payload, cmd utils.Command) error {
 		return err
 	}
 
+	user, err := db.GetUserByName(p.UserName)
+	if err != nil {
+		return err
+	}
+
 	state = fmt.Sprintf("%sed", state)
-	story, err := pvt.SetStoryState(id, state)
+	story, err := pvt.AssignAndSetStoryState(*user.PivotalId, id, state)
 	if err != nil {
 		return err
 	}

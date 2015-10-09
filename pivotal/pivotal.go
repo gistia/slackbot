@@ -254,6 +254,16 @@ func (pvt *Pivotal) SetStoryState(id string, state string) (*Story, error) {
 	return pvt.UpdateStory(story)
 }
 
+func (pvt *Pivotal) AssignAndSetStoryState(ownerId int64, storyId string, state string) (*Story, error) {
+	nid, err := strconv.ParseInt(storyId, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	story := Story{Id: nid, State: state, OwnerIds: []int64{ownerId}}
+	return pvt.UpdateStory(story)
+}
+
 func (pvt *Pivotal) AssignStory(id string, ownerId int64) (*Story, error) {
 	nid, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
