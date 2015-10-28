@@ -28,3 +28,4 @@ slackbot
 configs
 
 importer/init.go
+gin-bin
