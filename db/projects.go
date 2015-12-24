@@ -6,13 +6,13 @@ import (
 )
 
 type Project struct {
-	Id               int
-	Name             string
-	Channel          string
-	PivotalId        int64
-	MavenlinkId      int64
-	MvnSprintStoryId string
-	CreatedBy        string
+	Id               int    `json:"id"`
+	Name             string `json:"name"`
+	Channel          string `json:"channel"`
+	PivotalId        int64  `json:"pivotal_id"`
+	MavenlinkId      int64  `json:"mavelink_id"`
+	MvnSprintStoryId string `json:"sprint_story_id"`
+	CreatedBy        string `json:"created_by"`
 }
 
 func (p Project) StrPivotalId() string {

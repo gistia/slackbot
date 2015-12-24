@@ -22,9 +22,15 @@ import (
 
 func main() {
 	r := mux.NewRouter()
+
+	// command handlers
 	r.HandleFunc("/slack", slashCommandHandler)
 	r.HandleFunc("/slack_hook", hookHandler)
 	r.HandleFunc("/callback", callbackHandler)
+
+	// API endpoints
+	r.HandleFunc("/api/projects", web.GetProjects)
+
 	http.Handle("/", r)
 
 	pokerRouter := mux.NewRouter()
