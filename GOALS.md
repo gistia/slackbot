@@ -1,5 +1,52 @@
 # DevBot
 
+## Stories
+
+### Onboard a new user
+  - Add to Slack (manual?)
+  - Add to GitHub organization
+  - Add to Freshbooks
+  - Add to Mavenlink
+  - Add to Pivotal Tracker
+
+### Add a new project
+  - Create a chat room
+  - Create GitHub repo(s)
+    - Add Slack hooks for the repo (commits, etc.)
+  - Create a Freshbook project
+  - Create a Mavenlink project
+  - Create a Basecamp project
+    - Add Slack hooks for the project (new message, files, etc.)
+  - Create a Pivotal Tracker project
+    - Add PT hooks for the project (?)
+
+### Add user to project
+  - Add to Slack chat room
+  - Add to GitHub repo(s)
+  - Add to Mavenlink project
+  - Add to Freshbook project
+  - Add to Pivotal Tracker project
+  - Add to Basecamp project
+
+### Add a new sprint
+  - Create a new GitHub branch
+  - Create a new Mavenlink sprint
+  - Create (if possible) a Pivotal Tracker epic
+
+### Add tasks to a sprint
+  - Create a new task in Mavenlink
+  - Create a new task in Pivotal Tracker
+
+### Start a task
+  - Mark as started on Pivotal Tracker
+  - Mark user as owner on Pivotal Tracker
+
+### Finish a task
+  - Mark as finished on Pivotal Tracker
+  - Mark as finished on Mavenlink
+  - Add hours to Mavenlink
+  - Add hours to Freshbooks (optional)
+
 ## Project
 
 ### Entities
@@ -9,7 +56,7 @@
 - Slack Users (users)
 - Project Management Software (PM software)
 - Project
-- Tasks
+- Tasks / Stories
 
 ### Relationships
 
