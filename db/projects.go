@@ -10,7 +10,7 @@ type Project struct {
 	Name             string `json:"name"`
 	Channel          string `json:"channel"`
 	PivotalId        int64  `json:"pivotal_id"`
-	MavenlinkId      int64  `json:"mavelink_id"`
+	MavenlinkId      int64  `json:"mavenlink_id"`
 	MvnSprintStoryId string `json:"sprint_story_id"`
 	CreatedBy        string `json:"created_by"`
 }
