@@ -1,0 +1,19 @@
+{{define "body"}}
+<h1>Enter stories for {{.Project}}</h1>
+
+{{ if .Message }}
+  <div class="alert alert-info" role="alert">
+    {{ .Message }}
+  </div>
+{{ end }}
+
+<form method="POST">
+  <input type="hidden" name="user" value="{{.User}}">
+  <input type="hidden" name="project" value="{{.Project}}">
+  <input type="hidden" name="channel" value="{{.ChannelName}}">
+  <input type="hidden" name="channel_id" value="{{.ChannelID}}">
+
+  <textarea class="form-control" name="stories" rows="15"></textarea>
+  <button type="submit" class="btn btn-default">Add stories</button>
+</form>
+{{end}}

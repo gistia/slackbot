@@ -3,7 +3,6 @@ package web
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 	"text/template"
 
@@ -12,7 +11,7 @@ import (
 	"github.com/gorilla/sessions"
 )
 
-var store = sessions.NewCookieStore([]byte("6051dfc4b4602d7d8261f51c3bea2ad941a4167a753e5772ee2ed45c5959"))
+var Store = sessions.NewCookieStore([]byte("6051dfc4b4602d7d8261f51c3bea2ad941a4167a753e5772ee2ed45c5959"))
 
 type PokerPage struct {
 	SessionTitle string
@@ -23,7 +22,7 @@ type PokerPage struct {
 }
 
 func NewPokerStories(w http.ResponseWriter, r *http.Request) {
-	webSession, _ := store.Get(r, "session")
+	webSession, _ := Store.Get(r, "session")
 	channel := q(r.URL, "channel")
 	channelId := q(r.URL, "channel_id")
 
@@ -69,7 +68,7 @@ func NewPokerStories(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreatePokerStories(w http.ResponseWriter, r *http.Request) {
-	webSession, _ := store.Get(r, "session")
+	webSession, _ := Store.Get(r, "session")
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -106,13 +105,4 @@ func CreatePokerStories(w http.ResponseWriter, r *http.Request) {
 
 	location := fmt.Sprintf("/poker?channel_id=%s&channel=%s", channelId, channel)
 	http.Redirect(w, r, location, 301)
-}
-
-func q(url *url.URL, s string) string {
-	item := url.Query()[s]
-	if item == nil {
-		return ""
-	}
-
-	return strings.Join(item, "")
 }

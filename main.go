@@ -38,6 +38,11 @@ func main() {
 	pokerRouter.Methods("POST").Path("/poker").HandlerFunc(web.CreatePokerStories)
 	http.Handle("/poker", pokerRouter)
 
+	projectRouter := mux.NewRouter()
+	projectRouter.Methods("GET").Path("/addstories").HandlerFunc(web.NewStories)
+	projectRouter.Methods("POST").Path("/addstories").HandlerFunc(web.CreateStories)
+	http.Handle("/addstories", projectRouter)
+
 	go db.SetupDB()
 	if os.Getenv("RUN_BOT") != "" {
 		go startBot()

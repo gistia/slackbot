@@ -40,7 +40,11 @@ func (sh SlackHandler) SendWithAttachments(p *robots.Payload, s string, atts []r
 	fmt.Println(p.TeamDomain)
 	fmt.Println(" ->", s)
 	for _, a := range atts {
-		fmt.Println("    A:", a.Title)
+		if a.TitleLink != "" {
+			fmt.Println("    A:", a.Title, " -> ", a.TitleLink)
+		} else {
+			fmt.Println("    A:", a.Title)
+		}
 		fmt.Println("    T:", a.Text)
 	}
 	response := &robots.IncomingWebhook{

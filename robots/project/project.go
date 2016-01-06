@@ -3,6 +3,7 @@ package robots
 import (
 	"errors"
 	"fmt"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -40,6 +41,7 @@ func (r bot) DeferredAction(p *robots.Payload) {
 	ch.Handle("addsprint", r.addSprint)
 	ch.Handle("setchannel", r.setChannel)
 	ch.Handle("addstory", r.addStory)
+	ch.Handle("addstories", r.addStories)
 	ch.Handle("start", r.startTask)
 	ch.Handle("finish", r.finishTask)
 	ch.Handle("deliver", r.deliverTask)
@@ -625,6 +627,91 @@ func getProject(name string) (*db.Project, error) {
 	return pr, nil
 }
 
+func getChannelProject(p *robots.Payload) (*db.Project, error) {
+	pr, err := db.GetProjectByChannel(p.ChannelName)
+	if err != nil {
+		return nil, err
+	}
+	return pr, err
+}
+
+func (r bot) addStories(p *robots.Payload, cmd utils.Command) error {
+	name := cmd.Arg(0)
+	if name == "" {
+		pr, err := getChannelProject(p)
+		if err != nil {
+			return err
+		}
+		if pr == nil {
+			err := errors.New(
+				"No project assigned to this channel. Use `!project addstories <project>`")
+			return err
+		}
+		name = pr.Name
+	}
+	if name == "" {
+		err := errors.New(
+			"Missing project name. Use `!project addstories <project>`")
+		return err
+	}
+	appUrl := os.Getenv("APP_URL")
+	url := appUrl + "/addstories?channel=" + p.ChannelName +
+		"&channel_id=" + p.ChannelID + "&user=" + p.UserName +
+		"&project=" + name
+	a := utils.FmtAttachment("", "Click here to add stories", url, "Add stories to this project by following the link")
+	r.handler.SendWithAttachments(p, "", []robots.Attachment{a})
+	return nil
+}
+
+func CreateStory(userName string, projectName string, storyName string, storyType string) (*pivotal.Story, *mavenlink.Story, error) {
+	pr, err := getProject(projectName)
+	if err != nil {
+		return nil, nil, err
+	}
+	mvn, err := mavenlink.NewFor(userName)
+	if err != nil {
+		return nil, nil, err
+	}
+	pvt, err := pivotal.NewFor(userName)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	pvtStory := pivotal.Story{
+		Name:      storyName,
+		ProjectId: pr.PivotalId,
+		Type:      storyType,
+	}
+	pvtNewStory, err := pvt.CreateStory(pvtStory)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	desc := fmt.Sprintf("[pvt:%d]", pvtNewStory.Id)
+	mvnStory := mavenlink.Story{
+		Title:       storyName,
+		Description: desc,
+		ParentId:    pr.MvnSprintStoryId,
+		WorkspaceId: strconv.FormatInt(pr.MavenlinkId, 10),
+		StoryType:   "task",
+	}
+	mvnNewStory, err := mvn.CreateStory(mvnStory)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	tmpStory := pivotal.Story{
+		Id:          pvtNewStory.Id,
+		Description: "[mvn:" + mvnNewStory.Id + "]",
+	}
+	pvtNewStory, err = pvt.UpdateStory(tmpStory)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return &pvtStory, &mvnStory, err
+}
+
 func (r bot) addStory(p *robots.Payload, cmd utils.Command) error {
 	name := cmd.Arg(0)
 	if name == "" {
@@ -645,47 +732,7 @@ func (r bot) addStory(p *robots.Payload, cmd utils.Command) error {
 		return err
 	}
 
-	pr, err := getProject(name)
-	if err != nil {
-		return err
-	}
-	mvn, err := mavenlink.NewFor(p.UserName)
-	if err != nil {
-		return err
-	}
-	pvt, err := pivotal.NewFor(p.UserName)
-	if err != nil {
-		return err
-	}
-
-	pvtStory := pivotal.Story{
-		Name:      storyName,
-		ProjectId: pr.PivotalId,
-		Type:      storyType,
-	}
-	pvtNewStory, err := pvt.CreateStory(pvtStory)
-	if err != nil {
-		return err
-	}
-
-	desc := fmt.Sprintf("[pvt:%d]", pvtNewStory.Id)
-	mvnStory := mavenlink.Story{
-		Title:       storyName,
-		Description: desc,
-		ParentId:    pr.MvnSprintStoryId,
-		WorkspaceId: strconv.FormatInt(pr.MavenlinkId, 10),
-		StoryType:   "task",
-	}
-	mvnNewStory, err := mvn.CreateStory(mvnStory)
-	if err != nil {
-		return err
-	}
-
-	tmpStory := pivotal.Story{
-		Id:          pvtNewStory.Id,
-		Description: "[mvn:" + mvnNewStory.Id + "]",
-	}
-	pvtNewStory, err = pvt.UpdateStory(tmpStory)
+	pvtNewStory, mvnNewStory, err := CreateStory(p.UserName, name, storyName, storyType)
 	if err != nil {
 		return err
 	}
