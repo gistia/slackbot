@@ -11,6 +11,7 @@ type Project struct {
 	Channel          string `json:"channel"`
 	PivotalId        int64  `json:"pivotal_id"`
 	MavenlinkId      int64  `json:"mavenlink_id"`
+	BasecampId       string `json:"basecamp_id"`
 	MvnSprintStoryId string `json:"sprint_story_id"`
 	CreatedBy        string `json:"created_by"`
 }
@@ -32,10 +33,10 @@ func CreateProject(p Project) error {
 
 	_, err = con.Query(`
     INSERT INTO projects
-    (name, pivotal_id, mavenlink_id, created_by,
+    (name, pivotal_id, mavenlink_id, basecamp_id, created_by,
      mvn_sprint_story_id, channel)
     VALUES ($1, $2, $3, $4, $5, $6)`,
-		p.Name, p.PivotalId, p.MavenlinkId, p.CreatedBy,
+		p.Name, p.PivotalId, p.MavenlinkId, p.BasecampId, p.CreatedBy,
 		p.MvnSprintStoryId, p.Channel)
 	return err
 }
@@ -49,7 +50,7 @@ func GetProjects() ([]Project, error) {
 
 	rows, err := con.Query(`
     SELECT
-      "id", "name", "pivotal_id", "mavenlink_id", "created_by",
+      "id", "name", "pivotal_id", "mavenlink_id", "basecamp_id", "created_by",
       "mvn_sprint_story_id", "channel"
     FROM projects WHERE active = TRUE`)
 	if err != nil {
@@ -87,7 +88,7 @@ func GetProjectBy(field string, s string) (*Project, error) {
 
 	rows, err := con.Query(`
     SELECT
-      "id", "name", "pivotal_id", "mavenlink_id", "created_by",
+      "id", "name", "pivotal_id", "mavenlink_id", "basecamp_id", "created_by",
       "mvn_sprint_story_id", "channel"
     FROM projects
     WHERE "`+field+`" = $1`, s)
@@ -112,7 +113,7 @@ func GetProject(id int64) (*Project, error) {
 
 	rows, err := con.Query(`
     SELECT
-      "id", "name", "pivotal_id", "mavenlink_id", "created_by",
+      "id", "name", "pivotal_id", "mavenlink_id", "basecamp_id", "created_by",
       "mvn_sprint_story_id", "channel"
     FROM projects
     WHERE "id" = $1`, id)
@@ -143,11 +144,12 @@ func UpdateProject(p Project) error {
       "pivotal_id" = $2,
       "mavenlink_id" = $3,
       "created_by" = $4,
-      "mvn_sprint_story_id" = $5,
-      "channel" = $6
+			"basecamp_id" = $5,
+      "mvn_sprint_story_id" = $6,
+      "channel" = $7
     WHERE
       "id" = $7`,
-		p.Name, p.PivotalId, p.MavenlinkId,
+		p.Name, p.PivotalId, p.MavenlinkId, p.BasecampId,
 		p.CreatedBy, p.MvnSprintStoryId, p.Channel,
 		p.Id)
 	return err
@@ -157,8 +159,9 @@ func setProject(rows *sql.Rows) (*Project, error) {
 	p := Project{}
 	var mvnSprintStoryId sql.NullString
 	var channel sql.NullString
+	var basecampId sql.NullString
 	err := rows.Scan(
-		&p.Id, &p.Name, &p.PivotalId, &p.MavenlinkId, &p.CreatedBy,
+		&p.Id, &p.Name, &p.PivotalId, &p.MavenlinkId, &basecampId, &p.CreatedBy,
 		&mvnSprintStoryId, &channel)
 	if err != nil {
 		return nil, err
@@ -166,6 +169,10 @@ func setProject(rows *sql.Rows) (*Project, error) {
 
 	if mvnSprintStoryId.Valid {
 		p.MvnSprintStoryId = mvnSprintStoryId.String
+	}
+
+	if basecampId.Valid {
+		p.BasecampId = basecampId.String
 	}
 
 	if channel.Valid {
