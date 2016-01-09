@@ -709,7 +709,7 @@ func CreateStory(userName string, projectName string, storyName string, storyTyp
 		return nil, nil, err
 	}
 
-	return &pvtStory, &mvnStory, err
+	return pvtNewStory, mvnNewStory, err
 }
 
 func (r bot) addStory(p *robots.Payload, cmd utils.Command) error {
@@ -733,6 +733,8 @@ func (r bot) addStory(p *robots.Payload, cmd utils.Command) error {
 	}
 
 	pvtNewStory, mvnNewStory, err := CreateStory(p.UserName, name, storyName, storyType)
+	fmt.Printf("%v+\n", pvtNewStory)
+	fmt.Printf("%v+\n", mvnNewStory)
 	if err != nil {
 		return err
 	}
